@@ -1,11 +1,19 @@
-package sample2;
+package sample;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Chess board.
+ * 
+ * @author duonghung1269
+ * 
+ */
 public class Board {
 
-	private int[][] board;
+	private static final int KNIGHT_FARMOST_MOVE = 2;
+	private static final int KNIGHT_NEAREST_MOVE = 1;
+	private int[][] boardArray;
 	private final int rowSize;
 	private final int colSize;
 	private final int nearestMove;
@@ -20,19 +28,29 @@ public class Board {
 	 *            width of the board.
 	 */
 	public Board(int colSize, int rowSize) {
+		if (colSize <= 0) {
+			throw new IllegalArgumentException(
+					"Board length should be greater than 0!");
+		}
+
+		if (rowSize <= 0) {
+			throw new IllegalArgumentException(
+					"Board width should be greater than 0!");
+		}
+
 		this.colSize = colSize;
 		this.rowSize = rowSize;
-		this.nearestMove = 1;
-		this.fareMostMove = 2;
+		this.nearestMove = KNIGHT_NEAREST_MOVE;
+		this.fareMostMove = KNIGHT_FARMOST_MOVE;
 
 		initBoard();
 	}
 
 	private void initBoard() {
-		board = new int[rowSize][colSize];
+		boardArray = new int[rowSize][colSize];
 		for (int row = 0; row < rowSize; row++) {
 			for (int col = 0; col < colSize; col++) {
-				board[row][col] = -1;
+				boardArray[row][col] = -1;
 			}
 		}
 	}
@@ -47,9 +65,21 @@ public class Board {
 	 * @return the source node as it will represent the entire graph
 	 */
 	public Vertex initChessboardGraph(int sourceX, int sourceY) {
+		if (sourceX >= colSize) {
+			throw new IllegalArgumentException(
+					"x coordiante should be less than board length: " + colSize);
+		}
+
+		if (sourceY >= rowSize) {
+			throw new IllegalArgumentException(
+					"y coordiante should be less than board width: " + rowSize);
+		}
+
 		final ArrayList<Vertex> vertexes = createVertices();
 		addAdjaccentNodes(vertexes);
-		return getSourceNode(sourceX, sourceY, vertexes);
+		Vertex sourceNode = getSourceNode(sourceX, sourceY, vertexes);
+		sourceNode.setMovesCount(0);
+		return sourceNode;
 	}
 
 	private Vertex getSourceNode(int sourceX, int sourceY,
@@ -128,61 +158,58 @@ public class Board {
 	}
 
 	/**
-	 * adds adjacent nodes according to constrains in problem definition
+	 * Adds adjacent nodes according to constrains in problem definition
 	 * 
-	 * @param vertexes
-	 *            will be used to define connections between one another
+	 * @param vertices
+	 *            will be used to define connections between one another.
 	 */
 	private void createAdjVertexIfInBounds(Vertex vertex, int x, int y,
-			ArrayList<Vertex> vertexes) {
+			ArrayList<Vertex> vertices) {
 		// check problemConditions
 		if (!isPositionOnChessBoard(x, y)) {
 			return;
 		}
 
-		// we don't want to assign new instances of Vertexes
-		// as adjacent nodes , that will not work.
-		// we need to reuse the same instances and assign
-		// connections between them
-		final int indexOf = vertexes.indexOf(new Vertex(x, y));
-		final Vertex reusedVertex = vertexes.get(indexOf);
+		final int indexOf = vertices.indexOf(new Vertex(x, y));
+		final Vertex reusedVertex = vertices.get(indexOf);
 		vertex.addAdjVertex(reusedVertex);
 	}
 
-	public List<Vertex> solveProblem(final Vertex from) {
+	/**
+	 * Using Bread First Search Algorithm to solve problem.
+	 * 
+	 * @param sourceNode
+	 *            root node.
+	 */
+	public void movesKnight(final Vertex sourceNode) {
 		BfsAlgorithm bfs = new BfsAlgorithm();
-		return bfs.run(from, new BfsAlgorithm.BfsAction() {
-
-			@Override
-			public boolean onVisitParent(Vertex parent) {
-				return false;
-			}
-
-			@Override
-			public boolean onVisitChild(Vertex vertex) {
-				return false;
-			}
-		});
-
+		List<Vertex> visitedVertices = bfs.run(sourceNode);
+		updateBoardMovement(visitedVertices);
 	}
 
 	/**
-	 * @return true if the position within bounds of chessboard
+	 * Check if the position within bounds of chess board.
+	 * 
+	 * @param x
+	 *            x coordinate
+	 * @param y
+	 *            y coordinate
+	 * @return true if position within bounds of chess board, false otherwise.
 	 */
 	private boolean isPositionOnChessBoard(int x, int y) {
 		return (x < colSize && y < rowSize && x >= 0 && y >= 0);
 	}
 
-	public void updateBoard(List<Vertex> solvedVetices) {
+	private void updateBoardMovement(List<Vertex> solvedVetices) {
 		for (Vertex vertex : solvedVetices) {
-			board[vertex.getY()][vertex.getX()] = vertex.getMovesCount();
+			boardArray[vertex.getY()][vertex.getX()] = vertex.getMovesCount();
 		}
 	}
 
 	public void printBoard() {
 		for (int row = 0; row < rowSize; row++) {
 			for (int col = 0; col < colSize; col++) {
-				System.out.format("%3d ", board[row][col]);
+				System.out.format("%3d ", boardArray[row][col]);
 			}
 			System.out.println();
 		}
@@ -204,11 +231,12 @@ public class Board {
 		return colSize;
 	}
 
-	public int[][] getBoard() {
-		return board;
+	public int[][] getBoardArray() {
+		return boardArray;
+	}
+	
+	public void setBoardArray(int[][] boardArray) {
+		this.boardArray = boardArray;
 	}
 
-	public void setBoard(int[][] board) {
-		this.board = board;
-	}
 }

@@ -1,10 +1,6 @@
-package sample2;
+package sample;
 
-import java.util.*;
 
-/*
- * http://yanbraslavsky.blogspot.sg/2016/01/chess-knight-shortest-path-problem-java.html
- */
 public class Main {
 
     public static void main(String[] args) {
@@ -30,10 +26,8 @@ public class Main {
     	
     	Board board = new Board(colSize, rowSize);
     	Vertex sourceVertex = board.initChessboardGraph(sourceX, sourceY);
-        sourceVertex.setMovesCount(0);
-        List<Vertex> solvedVetices = board.solveProblem(sourceVertex);
+        board.movesKnight(sourceVertex);
         
-        board.updateBoard(solvedVetices);
         board.printBoard();
     }
 }
